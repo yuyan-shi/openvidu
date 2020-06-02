@@ -1,79 +1,90 @@
 <template>
-  <div class="hello">
+  <v-container fluid>
+    <v-row align="center">
+      <v-col class="d-flex" cols="12" sm="6">
+          <v-select
+            v-if="devices"
+            v-model="selectedDevice"
+            :items="devices"
+            item-text="title"
+            item-value="session_id"
+            label="Select devices"
+            v-on:change="leaveSession"
+          >
+          </v-select>
+      </v-col>
+      <v-col class="d-flex" cols="6" sm="3">
+        <v-btn v-if="selectedDevice&&!joined" @click="joinSession">Join session</v-btn>
+      </v-col>
+    </v-row>
+    <div id="session" v-if="joined">
+      <h2>Viewing session: {{selectedDevice}}</h2>
+      <v-btn @click="leaveSession">LEAVE SESSION</v-btn>
+        <div >
+            <div id ="publisher" class="publisher" ><h3>YOU</h3></div>
+            <div id ="subscriber" class="subscriber"><h3>OTHERS</h3></div>
+      </div>
+    </div>
+    </v-container>
 
-  <div id="join" v-show="!joined">
-		<h1>Join a video session</h1>
-		<form @submit="joinSession">
-			<p>
-				<label>Session:</label>
-				<input type="text" v-model="sessionId" required>
-			</p>
-			<p>
-				<input type="submit" value="JOIN">
-			</p>
-		</form>
-	</div>
-
-  <div id="session" v-show="joined">
-		<h1 v-text="sessionId"></h1>
-		<input type="button" onclick="leaveSession()" value="LEAVE">
-		<div>
-			<div id="publisher"><h3>YOU</h3></div>
-			<div id="subscriber"><h3>OTHERS</h3></div>
-		</div>
-	</div>
-
-  </div>
 </template>
 
 <script>
-// import { OpenVidu, Publisher, Session, StreamEvent, StreamManager, Subscriber } from 'openvidu-browser';
-import { OpenVidu, Session} from 'openvidu-browser';
-import JQuery from 'jquery';
-let $ = JQuery;
-
+import {OpenVidu} from 'openvidu-browser';
+import axios from 'axios';
+var OV;
+var session;
 export default {
-  name: 'HelloWorld',
+  name:'about',
   data(){
     return{
       joined: false,
-      OV: OpenVidu,
-      session: Session,
-      sessionId: "sessionA",
-      // subscribers: StreamManager[] = [], // Remotes
-      // mainStreamManager: StreamManager
       OPENVIDU_SERVER_URL: "https://" + location.hostname + ":4443",
       OPENVIDU_SERVER_SECRET: "MY_SECRET",
-
-    };
-  },
-  props: {
-    msg: String
+      devices: [
+        {
+          id: 1, 
+          title:"Home Camera Series 1",
+          session_id:"camera1",
+        },
+        {
+          id: 2,
+          title:"Home Camera Series 2",
+          session_id:"camera2",
+        }
+      ],
+      selectedDevice: undefined
+    }
   },
   methods:{
     joinSession: function(){
-      console.log("in joinSession")
-      this.OV = new OpenVidu();
-      this.session = this.OV.initSession();
+        this.joined = true;
+        console.log("in joinSession")
+        OV = new OpenVidu();
+        session = OV.initSession();
 
-      this.session.on("streamCreated", function (event) {
-        this.session.subscribe(event.stream, "subscriber");
-      });
+        session.on("streamCreated", function (event) {
+          session.subscribe(event.stream, "subscriber");
+        });
 
-      this.getToken(this.sessionId).then(token => {
-        
-        this.session.connect(token)
-          .then(() => {
-            this.joined = true;
-            var publisher = this.OV.initPublisher("publisher");
-            this.session.publish(publisher);
-          })
-          .catch(error => {
-            console.log("There was an error connecting to the session:", error.code, error.message);
-          });
-      });
+        this.getToken(this.selectedDevice).then(token => {
+        console.warn("after getToken")
+        session.connect(token)
+        .then(() => {
+            console.warn("In session.connect.then")
+            var publisher = OV.initPublisher("publisher");
+            session.publish(publisher);
+            })
+            .catch(error => {
+            console.warn("There was an error connecting to the session:", error.code, error.message);
+            });
+        });
     },
 
+    leaveSession: function() {
+            session.disconnect();
+            this.joined = false;
+        },
 
     /**
      * --------------------------
@@ -87,60 +98,85 @@ export default {
      *   3) The token must be consumed in Session.connect() method
      */
 
-    getToken: function(mySessionId){
-      return this.createSession(mySessionId).then(sessionId => this.createToken(sessionId));
-    },
-
-    createSession(sessionId){
-      return new Promise((resolve) => {
-        $.ajax({
-          type: "POST",
-          url: this.OPENVIDU_SERVER_URL + "/api/sessions",
-          data: JSON.stringify({ customSessionId: sessionId }),
-          headers: {
-            "Authorization": "Basic " + btoa("OPENVIDUAPP:" + this.OPENVIDU_SERVER_SECRET),
-            "Content-Type": "application/json"
-          },
-          success: response => resolve(response.id),
-          error: (error) => {
-            if (error.status === 409) {
-              resolve(sessionId);
-            } else {
-              console.log("sessionId is " + sessionId);
-              console.log(error);
-              console.warn('No connection to OpenVidu Server. This may be a certificate error at ' + this.OPENVIDU_SERVER_URL);
-              if (window.confirm('No connection to OpenVidu Server. This may be a certificate error at ' + this.OPENVIDU_SERVER_URL + '\n\nClick OK to navigate and accept it. ' +
-                'If no certificate warning is shown, then check that your OpenVidu Server is up and running at "' + this.OPENVIDU_SERVER_URL + '"')) {
-                location.assign(this.OPENVIDU_SERVER_URL + '/accept-certificate');
-                }
-              }
-          }
-        });
-      });
-    },
-
-    createToken: function(sessionId){
-      console.log("create token function" + sessionId)
-      return new Promise((resolve, reject) => {
-        $.ajax({
-        type: "POST",
-        url: this.OPENVIDU_SERVER_URL + "/api/tokens",
-        data: JSON.stringify({ session: sessionId }),
-        headers: {
-          "Authorization": "Basic " + btoa("OPENVIDUAPP:" + this.OPENVIDU_SERVER_SECRET),
-          "Content-Type": "application/json"
+        getToken(mySessionId) {
+            return this.createSession(mySessionId).then(() => this.createToken(this.selectedDevice));
         },
-        success: response => resolve(response.token),
-        error: error => reject(error)
-        });
-      });
-    }
-    
-  }
+
+        createSession: function(session_id) {
+            console.log(session_id)
+            return new Promise((resolve,reject) => {  
+            let currentObj = this;
+            axios({
+                method:'post', 
+                url: this.OPENVIDU_SERVER_URL + "/api/sessions",
+                data: JSON.stringify({ customSessionId: session_id}),
+                headers: {
+                    "Authorization": "Basic " + btoa("OPENVIDUAPP:" + this.OPENVIDU_SERVER_SECRET),
+                    "Content-Type": "application/json"
+                },
+            })
+            .then(function (response) {
+                currentObj.id_output = response.data.id;
+                console.log('CREATE SESION', response);
+                resolve(response.data.id);
+            })
+            .catch(function (response) {
+                var error = Object.assign({}, response);
+                currentObj.output = error.response;  // for debugging
+                console.warn(error.response);
+
+                if (error.response.status === 409) {
+                    currentObj.id_output = session_id;
+                    resolve(session_id);
+                } else {
+                    var error_string = JSON.stringify(error);
+                    console.log(error_string);
+                    console.warn(
+                    'No connection to OpenVidu Server. This may be a certificate error at ' +
+                    this.OPENVIDU_SERVER_URL,
+                );
+                    if (
+                        window.confirm(
+                        'No connection to OpenVidu Server. This may be a certificate error at "' +
+                        this.OPENVIDU_SERVER_URL +
+                        '"\n\nClick OK to navigate and accept it. ' +
+                        'If no certificate warning is shown, then check that your OpenVidu Server is up and running at "' +
+                        this.OPENVIDU_SERVER_URL +
+                        '"',
+                    )
+                    ) {
+                        window.location.assign(this.OPENVIDU_SERVER_URL + '/accept-certificate');
+                    }
+                }
+                reject(error);
+            });
+            });
+        },
+
+        createToken: function(session_id) {
+            return new Promise((resolve, reject) => {    
+            let currentObj = this;
+            console.log("session_id: " + session_id)
+            axios({
+                method:'post', 
+                url: this.OPENVIDU_SERVER_URL + "/api/tokens",
+                data: JSON.stringify({ session: session_id }),
+                headers: {
+                    "Authorization": "Basic " + btoa("OPENVIDUAPP:" + this.OPENVIDU_SERVER_SECRET),
+                    "Content-Type": "application/json"
+                },  
+            })
+            .then(function (response) {
+                currentObj.token_output = response.data.token;
+                resolve(response.data.id)
+            })
+            .catch(function (error) {
+                console.warn("error in createToken")
+                currentObj.token_output = error;
+                reject(error)
+            });
+            });
+        },
+        }
 }
-
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-</style>
