@@ -13,11 +13,9 @@
             <v-card-text>
               <div class="heading font-weight-bold grey--text">{{device.title}}</div>
             </v-card-text>
-            <router-link
-              :color="device.color"
-              text
-              :to="{name:'About', params:{ id: devices }}"
-            >MONITOR DEVICE</router-link>
+            <router-link :to="{name:'About'}">
+              <span v-on:click="set_device(device.session_id)">MONITOR DEVICE</span>
+            </router-link>
           </v-responsive>
         </v-card>
       </v-flex>
@@ -26,29 +24,24 @@
 </template>
 
 <script>
-// @ is an alias to /src
-
 export default {
   name: 'Home',
-  components: {
-  },
-  data(){
-    return{
-      devices: [
-        {
-          id: 1, 
-          title:"Home Camera Series 1",
-          session_id:"camera1",
-          color:"indigo lighten-2"
-        },
-        {
-          id: 2,
-          title:"Home Camera Series 2",
-          session_id:"camera2",
-          color:"teal ligthen-5"
-        }
-      ]
+  computed:{
+    joined(){
+      return this.$store.state.joined;
+    },
+    selectedDevice(){
+      return this.$store.state.selectedDevice;
+    },
+    devices(){
+      return this.$store.state.devices;
     }
   },
+  methods:{
+    set_device(session_id){
+      this.$store.commit('set_device',session_id);
+      this.$store.commit('set_joined', true);
+    }
+  }
 }
 </script>

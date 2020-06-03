@@ -1,16 +1,15 @@
 <template>
   <v-container fluid>
-    <!-- <p>data from parent: {{devices}}</p> -->
     <v-row align="center">
       <v-col class="d-flex" cols="12" sm="6">
           <v-select
             v-if="devices"
-            v-model="selectedDevice"
+            v-model="selected"
             :items="devices"
             item-text="title"
             item-value="session_id"
             label="Select devices"
-            v-on:change="leaveSession"
+            v-on:change="changed_selection"
           >
           </v-select>
       </v-col>
@@ -39,56 +38,66 @@ export default {
   name:'about',
   data(){
     return{
-      joined: false,
+      selected:'',
       OPENVIDU_SERVER_URL: "https://" + location.hostname + ":4443",
       OPENVIDU_SERVER_SECRET: "MY_SECRET",
-      // devices: [
-      //   {
-      //     id: 1, 
-      //     title:"Home Camera Series 1",
-      //     session_id:"camera1",
-      //   },
-      //   {
-      //     id: 2,
-      //     title:"Home Camera Series 2",
-      //     session_id:"camera2",
-      //   }
-      // ],
-      selectedDevice: undefined
     }
   },
-  props:{
-    devices: Array,
+  computed:{
+    joined(){
+      return this.$store.state.joined;
+    },
+    selectedDevice(){
+      return this.$store.state.selectedDevice;
+    },
+    devices(){
+      return this.$store.state.devices;
+    }
+  },
+  mounted:function(){
+    if(this.joined&&this.selectedDevice){
+      console.log('joined and sleectedDevice are toggled');
+      this.joinSession();
+    }
   },
   methods:{
     joinSession: function(){
-        this.joined = true;
-        console.log("in joinSession")
-        OV = new OpenVidu();
-        session = OV.initSession();
+      this.$store.commit('set_joined', true);
+      console.log("in joinSession")
+      OV = new OpenVidu();
+      session = OV.initSession();
 
-        session.on("streamCreated", function (event) {
-          session.subscribe(event.stream, "subscriber");
-        });
+      session.on("streamCreated", function (event) {
+        session.subscribe(event.stream, "subscriber");
+      });
 
-        this.getToken(this.selectedDevice).then(token => {
-        console.warn("after getToken")
-        session.connect(token)
-        .then(() => {
-            console.warn("In session.connect.then")
-            var publisher = OV.initPublisher("publisher", { resolution: '320x240', frameRate: 15 });
-            session.publish(publisher);
-            })
-            .catch(error => {
-            console.warn("There was an error connecting to the session:", error.code, error.message);
-            });
-        });
+      this.getToken(this.selectedDevice).then(token => {
+      console.warn("after getToken")
+      session.connect(token)
+      .then(() => {
+          console.warn("In session.connect.then")
+          // var publisher = OV.initPublisher("publisher", { resolution: '320x240', frameRate: 15 });
+          var publisher = OV.initPublisher("publisher");
+          session.publish(publisher);
+          })
+          .catch(error => {
+          console.warn("There was an error connecting to the session:", error.code, error.message);
+          });
+      });
     },
 
     leaveSession: function() {
-            session.disconnect();
-            this.joined = false;
-        },
+      session.disconnect();
+      this.$store.commit('set_joined', false);
+    },
+
+    changed_selection:function(){
+      if(session){
+        this.leaveSession();
+      }
+      this.$store.commit('set_device',this.selected);
+      console.log('selectedDevice: ' + this.selectedDevice);
+    },
 
     /**
      * --------------------------

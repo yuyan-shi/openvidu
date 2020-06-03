@@ -11,7 +11,7 @@ Vue.use(VueRouter)
     component: Home
   },
   {
-    path: '/about/id',
+    path: '/about',
     name: 'About',
     // props: {default: true},
     // route level code-splitting

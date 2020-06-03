@@ -1,7 +1,7 @@
 <template>
   <div class="home">
     <!-- <p>Team ID is {{ id }}</p> -->
-    <HelloWorld :devices='id'/>
+    <HelloWorld/>
   </div>
 </template>
 
@@ -15,8 +15,5 @@ export default {
   components: {
     HelloWorld
   },
-  created(){
-    this.id = this.$route.params.id;
-  }
 }
 </script>
