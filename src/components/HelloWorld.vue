@@ -1,5 +1,6 @@
 <template>
   <v-container fluid>
+    <!-- <p>data from parent: {{devices}}</p> -->
     <v-row align="center">
       <v-col class="d-flex" cols="12" sm="6">
           <v-select
@@ -41,20 +42,23 @@ export default {
       joined: false,
       OPENVIDU_SERVER_URL: "https://" + location.hostname + ":4443",
       OPENVIDU_SERVER_SECRET: "MY_SECRET",
-      devices: [
-        {
-          id: 1, 
-          title:"Home Camera Series 1",
-          session_id:"camera1",
-        },
-        {
-          id: 2,
-          title:"Home Camera Series 2",
-          session_id:"camera2",
-        }
-      ],
+      // devices: [
+      //   {
+      //     id: 1, 
+      //     title:"Home Camera Series 1",
+      //     session_id:"camera1",
+      //   },
+      //   {
+      //     id: 2,
+      //     title:"Home Camera Series 2",
+      //     session_id:"camera2",
+      //   }
+      // ],
       selectedDevice: undefined
     }
+  },
+  props:{
+    devices: Array,
   },
   methods:{
     joinSession: function(){
@@ -72,7 +76,7 @@ export default {
         session.connect(token)
         .then(() => {
             console.warn("In session.connect.then")
-            var publisher = OV.initPublisher("publisher");
+            var publisher = OV.initPublisher("publisher", { resolution: '320x240', frameRate: 15 });
             session.publish(publisher);
             })
             .catch(error => {

@@ -11,8 +11,13 @@
             <v-avatar :color="device.color" size="100">
             </v-avatar>
             <v-card-text>
-              <div class="heading font-weight-bold">{{device.title}}</div>
+              <div class="heading font-weight-bold grey--text">{{device.title}}</div>
             </v-card-text>
+            <router-link
+              :color="device.color"
+              text
+              :to="{name:'About', params:{ id: devices }}"
+            >MONITOR DEVICE</router-link>
           </v-responsive>
         </v-card>
       </v-flex>
@@ -38,8 +43,8 @@ export default {
         },
         {
           id: 2,
-          title:"Home Camera XXUN",
-          session_id:"/camera2",
+          title:"Home Camera Series 2",
+          session_id:"camera2",
           color:"teal ligthen-5"
         }
       ]
