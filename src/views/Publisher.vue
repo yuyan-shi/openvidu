@@ -20,9 +20,9 @@
     <div id="session" v-if="joined">
       <h2>Viewing session: {{selectedDevice}}</h2>
       <v-btn @click="leaveSession">LEAVE SESSION</v-btn>
-      <br>
         <div >
-            <div id ="subscriber" class="subscriber"></div>
+            <div id ="publisher" class="publisher" ><h3>YOU</h3></div>
+            <div id ="subscriber" class="subscriber"><h3>OTHERS</h3></div>
       </div>
     </div>
     </v-container>
@@ -43,7 +43,6 @@ export default {
       OPENVIDU_SERVER_SECRET: "MY_SECRET",
     }
   },
-
   computed:{
     joined(){
       return this.$store.state.joined;
@@ -55,14 +54,12 @@ export default {
       return this.$store.state.devices;
     }
   },
-
   mounted:function(){
     if(this.joined&&this.selectedDevice){
       console.log('joined and sleectedDevice are toggled');
       this.joinSession();
     }
   },
-
   methods:{
     joinSession: function(){
       this.$store.commit('set_joined', true);
@@ -70,21 +67,18 @@ export default {
       OV = new OpenVidu();
       session = OV.initSession();
 
-      // OV.fetch()
-      //   .then(()=>{
-      //     var activeSessions = OV.activeSessions;
-      //     console.warn("Active Sessions:" + activeSessions);
-      // })
-
-      session.on("streamCreated", function (event) {
-        session.subscribe(event.stream, "subscriber");
-      });
-
       this.getToken(this.selectedDevice).then(token => {
+      console.warn("after getToken")
       session.connect(token)
-      .catch(error => {
-      console.warn("There was an error connecting to the session:", error.code, error.message);
-      });
+      .then(() => {
+          console.warn("In session.connect.then")
+          // var publisher = OV.initPublisher("publisher", { resolution: '320x240', frameRate: 15 });
+          var publisher = OV.initPublisher("publisher");
+          session.publish(publisher);
+          })
+          .catch(error => {
+          console.warn("There was an error connecting to the session:", error.code, error.message);
+          });
       });
     },
 
