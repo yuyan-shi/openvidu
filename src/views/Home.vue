@@ -13,6 +13,14 @@
             <v-card-text>
               <div class="heading font-weight-bold grey--text">{{device.title}}</div>
             </v-card-text>
+            <v-card-text>
+              <div 
+                class="static"
+                :class="{'green--text': device.status == 'connected', 'grey--text': device.status == 'not connected'}"
+              >
+                {{device.status}}</div>
+              <v-btn @click="refresh_status(device.session_id)">refresh status</v-btn>
+            </v-card-text>
             <router-link :to="{name:'About'}">
               <span v-on:click="set_device(device.session_id)">MONITOR DEVICE</span>
             </router-link>
@@ -24,6 +32,7 @@
 </template>
 
 <script>
+// import { mapGetters,  mapActions} from 'vuex';
 export default {
   name: 'Home',
   computed:{
@@ -35,12 +44,27 @@ export default {
     },
     devices(){
       return this.$store.state.devices;
-    }
+    },
+    status(){
+      return this.$store.state.status;
+    },
+    // status_color(status){
+    //   if(status == "connected"){
+    //     return true
+    //   }
+    //   else{
+    //     return false
+    //   }
+    // }
   },
+
   methods:{
     set_device(session_id){
-      this.$store.commit('set_device',session_id);
-      this.$store.commit('set_joined', true);
+      this.$store.commit('SET_DEVICE',session_id);
+      this.$store.commit('SET_JOINED', true);
+    },
+    refresh_status(session_id){
+      this.$store.dispatch('check_status',session_id);
     }
   }
 }

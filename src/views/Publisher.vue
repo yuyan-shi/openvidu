@@ -17,12 +17,13 @@
         <v-btn v-if="selectedDevice&&!joined" @click="joinSession">Join session</v-btn>
       </v-col>
     </v-row>
+
     <div id="session" v-if="joined">
       <h2>Viewing session: {{selectedDevice}}</h2>
+      <v-btn @click="status">status of: {{selectedDevice}}</v-btn>
       <v-btn @click="leaveSession">LEAVE SESSION</v-btn>
         <div >
             <div id ="publisher" class="publisher" ><h3>YOU</h3></div>
-            <div id ="subscriber" class="subscriber"><h3>OTHERS</h3></div>
       </div>
     </div>
     </v-container>
@@ -62,7 +63,7 @@ export default {
   },
   methods:{
     joinSession: function(){
-      this.$store.commit('set_joined', true);
+      this.$store.commit('SET_JOINED', true);
       console.log("in joinSession")
       OV = new OpenVidu();
       session = OV.initSession();
@@ -84,14 +85,14 @@ export default {
 
     leaveSession: function() {
       session.disconnect();
-      this.$store.commit('set_joined', false);
+      this.$store.commit('SET_JOINED', false);
     },
 
     changed_selection:function(){
       if(session){
         this.leaveSession();
       }
-      this.$store.commit('set_device',this.selected);
+      this.$store.commit('SET_DEVICE',this.selected);
       console.log('selectedDevice: ' + this.selectedDevice);
     },
 
@@ -187,5 +188,6 @@ export default {
             });
         },
         }
+
 }
 </script>
