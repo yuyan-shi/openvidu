@@ -8,10 +8,10 @@
           color="grey lighten-5"
         >
           <v-responsive class="pt-4">
-            <v-avatar :color="device.color" size="100">
+            <v-avatar color=cyan size="100">
             </v-avatar>
             <v-card-text>
-              <div class="heading font-weight-bold grey--text">{{device.title}}</div>
+              <div class="heading font-weight-bold grey--text">{{device.name}}</div>
             </v-card-text>
             <v-card-text>
               <div 
@@ -19,7 +19,7 @@
                 :class="{'green--text': device.status == 'connected', 'grey--text': device.status == 'not connected'}"
               >
                 {{device.status}}</div>
-              <v-btn @click="refresh_status(device.session_id)">refresh status</v-btn>
+              <!-- <v-btn @click="refresh_status(device.session_id)">refresh status</v-btn> -->
             </v-card-text>
             <router-link :to="{name:'About'}">
               <span v-on:click="set_device(device.session_id)">MONITOR DEVICE</span>
@@ -32,40 +32,29 @@
 </template>
 
 <script>
-// import { mapGetters,  mapActions} from 'vuex';
+import {mapState, mapMutations, mapActions} from 'vuex';
 export default {
   name: 'Home',
   computed:{
-    joined(){
-      return this.$store.state.joined;
-    },
-    selectedDevice(){
-      return this.$store.state.selectedDevice;
-    },
-    devices(){
-      return this.$store.state.devices;
-    },
-    status(){
-      return this.$store.state.status;
-    },
-    // status_color(status){
-    //   if(status == "connected"){
-    //     return true
-    //   }
-    //   else{
-    //     return false
-    //   }
-    // }
+    ...mapState(['joined', 'selectedDevice', 'devices']),
   },
 
   methods:{
+    ...mapMutations(['SELECT_DEVICE','SET_JOINED']),
+    ...mapActions(['poll_devices']),
+
     set_device(session_id){
-      this.$store.commit('SET_DEVICE',session_id);
-      this.$store.commit('SET_JOINED', true);
+      this.SELECT_DEVICE(session_id);
+      this.SET_JOINED(true);
     },
-    refresh_status(session_id){
-      this.$store.dispatch('check_status',session_id);
-    }
+  },
+
+  created(){
+    this.poll_devices();
+  },
+
+  beforeDestroy(){
+    //
   }
 }
 </script>

@@ -61,6 +61,11 @@ export default {
       this.joinSession();
     }
   },
+
+  beforeDestroy:function(){
+    this.leaveSession();
+  }, 
+
   methods:{
     joinSession: function(){
       this.$store.commit('SET_JOINED', true);
@@ -92,7 +97,7 @@ export default {
       if(session){
         this.leaveSession();
       }
-      this.$store.commit('SET_DEVICE',this.selected);
+      this.$store.commit('SELECT_DEVICE',this.selected);
       console.log('selectedDevice: ' + this.selectedDevice);
     },
 
@@ -108,86 +113,86 @@ export default {
      *   3) The token must be consumed in Session.connect() method
      */
 
-        getToken(mySessionId) {
-            return this.createSession(mySessionId).then(() => this.createToken(this.selectedDevice));
-        },
+    getToken(mySessionId) {
+        return this.createSession(mySessionId).then(() => this.createToken(this.selectedDevice));
+    },
 
-        createSession: function(session_id) {
-            console.log(session_id)
-            return new Promise((resolve,reject) => {  
-            let currentObj = this;
-            axios({
-                method:'post', 
-                url: this.OPENVIDU_SERVER_URL + "/api/sessions",
-                data: JSON.stringify({ customSessionId: session_id}),
-                headers: {
-                    "Authorization": "Basic " + btoa("OPENVIDUAPP:" + this.OPENVIDU_SERVER_SECRET),
-                    "Content-Type": "application/json"
-                },
-            })
-            .then(function (response) {
-                currentObj.id_output = response.data.id;
-                console.log('CREATE SESION', response);
-                resolve(response.data.id);
-            })
-            .catch(function (response) {
-                var error = Object.assign({}, response);
-                currentObj.output = error.response;  // for debugging
-                console.warn(error.response);
+    createSession: function(session_id) {
+        console.log(session_id)
+        return new Promise((resolve,reject) => {  
+        let currentObj = this;
+        axios({
+            method:'post', 
+            url: this.OPENVIDU_SERVER_URL + "/api/sessions",
+            data: JSON.stringify({ customSessionId: session_id}),
+            headers: {
+                "Authorization": "Basic " + btoa("OPENVIDUAPP:" + this.OPENVIDU_SERVER_SECRET),
+                "Content-Type": "application/json"
+            },
+        })
+        .then(function (response) {
+            currentObj.id_output = response.data.id;
+            console.log('CREATE SESION', response);
+            resolve(response.data.id);
+        })
+        .catch(function (response) {
+            var error = Object.assign({}, response);
+            currentObj.output = error.response;  // for debugging
+            console.warn(error.response);
 
-                if (error.response.status === 409) {
-                    currentObj.id_output = session_id;
-                    resolve(session_id);
-                } else {
-                    var error_string = JSON.stringify(error);
-                    console.log(error_string);
-                    console.warn(
-                    'No connection to OpenVidu Server. This may be a certificate error at ' +
-                    this.OPENVIDU_SERVER_URL,
-                );
-                    if (
-                        window.confirm(
-                        'No connection to OpenVidu Server. This may be a certificate error at "' +
-                        this.OPENVIDU_SERVER_URL +
-                        '"\n\nClick OK to navigate and accept it. ' +
-                        'If no certificate warning is shown, then check that your OpenVidu Server is up and running at "' +
-                        this.OPENVIDU_SERVER_URL +
-                        '"',
-                    )
-                    ) {
-                        window.location.assign(this.OPENVIDU_SERVER_URL + '/accept-certificate');
-                    }
+            if (error.response.status === 409) {
+                currentObj.id_output = session_id;
+                resolve(session_id);
+            } else {
+                var error_string = JSON.stringify(error);
+                console.log(error_string);
+                console.warn(
+                'No connection to OpenVidu Server. This may be a certificate error at ' +
+                this.OPENVIDU_SERVER_URL,
+            );
+                if (
+                    window.confirm(
+                    'No connection to OpenVidu Server. This may be a certificate error at "' +
+                    this.OPENVIDU_SERVER_URL +
+                    '"\n\nClick OK to navigate and accept it. ' +
+                    'If no certificate warning is shown, then check that your OpenVidu Server is up and running at "' +
+                    this.OPENVIDU_SERVER_URL +
+                    '"',
+                )
+                ) {
+                    window.location.assign(this.OPENVIDU_SERVER_URL + '/accept-certificate');
                 }
-                reject(error);
-            });
-            });
-        },
+            }
+            reject(error);
+        });
+        });
+    },
 
-        createToken: function(session_id) {
-            return new Promise((resolve, reject) => {    
-            let currentObj = this;
-            console.log("session_id: " + session_id)
-            axios({
-                method:'post', 
-                url: this.OPENVIDU_SERVER_URL + "/api/tokens",
-                data: JSON.stringify({ session: session_id }),
-                headers: {
-                    "Authorization": "Basic " + btoa("OPENVIDUAPP:" + this.OPENVIDU_SERVER_SECRET),
-                    "Content-Type": "application/json"
-                },  
-            })
-            .then(function (response) {
-                currentObj.token_output = response.data.token;
-                resolve(response.data.id)
-            })
-            .catch(function (error) {
-                console.warn("error in createToken")
-                currentObj.token_output = error;
-                reject(error)
-            });
-            });
-        },
-        }
-
+    createToken: function(session_id) {
+      return new Promise((resolve, reject) => {    
+      let currentObj = this;
+      console.log("session_id: " + session_id)
+      axios({
+        method:'post', 
+        url: this.OPENVIDU_SERVER_URL + "/api/tokens",
+        data: JSON.stringify({ session: session_id }),
+        headers: {
+            "Authorization": "Basic " + btoa("OPENVIDUAPP:" + this.OPENVIDU_SERVER_SECRET),
+            "Content-Type": "application/json"
+        },  
+      })
+      .then(function (response) {
+        currentObj.token_output = response.data.token;
+        resolve(response.data.id)
+      })
+      .catch(function (error) {
+        console.warn("error in createToken")
+        currentObj.token_output = error;
+        reject(error)
+      });
+      });
+    },
+  },
 }
+
 </script>

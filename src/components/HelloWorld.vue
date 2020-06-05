@@ -30,6 +30,7 @@
 </template>
 
 <script>
+import {mapState, mapMutations} from 'vuex';
 import {OpenVidu} from 'openvidu-browser';
 import axios from 'axios';
 var OV;
@@ -45,15 +46,7 @@ export default {
   },
 
   computed:{
-    joined(){
-      return this.$store.state.joined;
-    },
-    selectedDevice(){
-      return this.$store.state.selectedDevice;
-    },
-    devices(){
-      return this.$store.state.devices;
-    }
+    ...mapState(['joined', 'selectedDevice', 'devices']),
   },
 
   mounted:function(){
@@ -63,9 +56,17 @@ export default {
     }
   },
 
+  beforeDestroy(){
+    if(session){
+        this.leaveSession();
+    }
+  },
+
   methods:{
+    ...mapMutations(['SELECT_DEVICE','SET_JOINED']),
+
     joinSession: function(){
-      this.$store.commit('SET_JOINED', true);
+      this.SET_JOINED(true);
       console.log("in joinSession")
       OV = new OpenVidu();
       session = OV.initSession();
@@ -84,14 +85,14 @@ export default {
 
     leaveSession: function() {
       session.disconnect();
-      this.$store.commit('SET_JOINED', false);
+      this.SET_JOINED(false);
     },
 
     changed_selection:function(){
       if(session){
         this.leaveSession();
       }
-      this.$store.commit('SET_DEVICE',this.selected);
+      this.SELECT_DEVICE(this.selected);
     },
 
     /**

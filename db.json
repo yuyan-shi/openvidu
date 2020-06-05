@@ -1,0 +1,14 @@
+{
+    "devices":[
+        {
+            "device_name":"device1",
+            "session_id":"camera1",
+            "status":"connected"
+            },
+            {
+            "device_name":"device2",
+            "session_id":"camera2",
+            "status":"not connected"
+            }
+    ]
+}
