@@ -2,7 +2,7 @@
   <div class="home">
     <p>this is the home page</p>
         <v-layout row wrap class="ma-4">
-      <v-flex xs12 sm6 md4 lg3 v-for="device in devices" :key="device.id">
+      <v-flex xs12 sm6 md4 lg3 v-for="device in devices" :key="device.session_id">
         <v-card 
           class="text-center ma-6"
           color="grey lighten-5"
@@ -11,18 +11,18 @@
             <v-avatar color=cyan size="100">
             </v-avatar>
             <v-card-text>
-              <div class="heading font-weight-bold grey--text">{{device.name}}</div>
+              <div class="heading font-weight-bold grey--text">{{device.device_name}}</div>
             </v-card-text>
             <v-card-text>
               <div 
                 class="static"
-                :class="{'green--text': device.status == 'connected', 'grey--text': device.status == 'not connected'}"
+                :class="{'green--text': device.Status == 'connected', 'grey--text': device.Status == 'not connected'}"
               >
-                {{device.status}}</div>
+                {{device.Status}}</div>
               <!-- <v-btn @click="refresh_status(device.session_id)">refresh status</v-btn> -->
             </v-card-text>
             <router-link :to="{name:'About'}">
-              <span v-on:click="set_device(device.session_id)">MONITOR DEVICE</span>
+              <span v-on:click="set_device(device.Session_id)">MONITOR DEVICE</span>
             </router-link>
           </v-responsive>
         </v-card>

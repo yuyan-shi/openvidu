@@ -8,12 +8,12 @@ const store = new Vuex.Store({
     //split this file into modules are include them here if there are too many functions
   },
   state: {
-    // OPENVIDU_SERVER_URL: "https://" + location.hostname + ":4443",
-    // OPENVIDU_SERVER_SECRET: "MY_SECRET",
-    backend_url: "http://localhost:3000",
+    backend_url: "https://localhost:5000/api-sessions",
+    // backend_url: "https://165.22.99.104:5000/api-sessions",
     selectedDevice:undefined, 
     joined: false,
-    devices: undefined
+    devices: undefined,
+    token: undefined
   },
   
   mutations: {
@@ -37,6 +37,9 @@ const store = new Vuex.Store({
         return device.session_id == session_id
       })
       device.status = 'not connected';
+    },
+    TOKEN_UPDATE(state,token){
+      state.token = token;
     }
   },
 
@@ -45,9 +48,13 @@ const store = new Vuex.Store({
       setInterval(() => {
         axios({
           method:'get', 
-          url: context.state.backend_url + "/devices",      
+          url: context.state.backend_url + "/obtain-device-list",
+          headers:{
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*"
+          }
         }).then(function(response){
-          context.commit('UPDATE_DEVICES',response.data);
+          context.commit('UPDATE_DEVICES',Object.values(response.data));
         })
         .catch(function(error){
           console.warn(error);
@@ -55,7 +62,26 @@ const store = new Vuex.Store({
       },2000)
     },
 
-
+    get_token(context,session){
+      return new Promise((resolve,reject) => {
+        axios({
+          method:'post', 
+          url: context.state.backend_url + "/get-token",
+          data: JSON.stringify({session_id:session}),
+          headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+          },
+        })
+        .then(response => {
+          console.log('store returns token: ' + response.data.token)
+          resolve(response.data.token);
+        })
+        .catch(error => {
+          reject(error)
+        })
+      })
+    },
     // check_status(context,session_id) {
     //   axios({
     //       method:'get', 
