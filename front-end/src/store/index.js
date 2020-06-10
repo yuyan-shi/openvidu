@@ -80,13 +80,13 @@ const store = new Vuex.Store({
       })
     },
 
-    DISCONNECT(context,{session,token}){
-      console.log(session,token)
+    DISCONNECT(context,{device,token}){
+      console.log("in DISCONNECT: " + device + " " + token)
       return new Promise((resolve,reject) => {
         axios({
           method:'post', 
           url: context.state.backend_url + "/api-sessions/remove-user",
-          data: JSON.stringify({session_id:session, token:token}),
+          data: JSON.stringify({session_id:device, token:token}),
           headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*"
@@ -96,7 +96,7 @@ const store = new Vuex.Store({
           resolve(response.data);
         })
         .catch(error => {
-          console.log('removing session ' + session + ' failed');
+          console.log('removing session ' + device + ' failed');
           reject(error);
         })
       })
@@ -175,7 +175,6 @@ const store = new Vuex.Store({
         }
       }).then(function(response){
         var recordings= Object.values(response.data)
-        // delete recordings.timestamp_raw
         resolve(recordings)
       })
       .catch(function(error){

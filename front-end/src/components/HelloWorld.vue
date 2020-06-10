@@ -131,13 +131,15 @@ export default {
     },
 
     leaveSession: function() {
-      // let device = this.selectedDevice;
-      // let token = this.token;
-      // console.log('in leaveSession with data: ' + device + ' ' + token)
-      // this.DISCONNECT({device,token});
+      let device = this.selectedDevice;
+      let token = this.token;
+      console.log('in leaveSession with data: ' + device + ' ' + token)
+      this.DISCONNECT({device,token}).then(() => {
+        console.log('leave session sucess')
+        this.SET_JOINED(false);
+      })
+      // session.disconnect();
       // this.SET_JOINED(false);
-      session.disconnect();
-      this.SET_JOINED(false);
     },
 
     changed_selection:function(){
@@ -195,16 +197,16 @@ export default {
       })
     },
 
-    // delete_recording:function(id){
-    //   console.log('delete_recording, id: ' + id)
-    //   this.DELETE_RECORDING(id).then(response => {
-    //     this.status_msg = response;
-    //     this.retrieve_recording();
-    //   })
-    //   .catch(error => {
-    //     this.status_msg = error;
-    //   })
-    // }
+    delete_recording:function(id){
+      console.log('delete_recording, id: ' + id)
+      this.DELETE_RECORDING(id).then(response => {
+        this.status_msg = response;
+        this.retrieve_recording();
+      })
+      .catch(error => {
+        this.status_msg = error;
+      })
+    }
 
   }
 }
