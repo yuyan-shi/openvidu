@@ -8,7 +8,7 @@ const store = new Vuex.Store({
     //split this file into modules are include them here if there are too many functions
   },
   state: {
-    // backend_url: "https://localhost:5000/api-sessions",
+    // backend_url: "https://localhost:5000",
     backend_url: "https://165.22.99.104:5000",
     selectedDevice:undefined, 
     joined: false,

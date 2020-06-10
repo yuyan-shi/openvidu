@@ -26,7 +26,7 @@
       <v-btn v-if="!recording" @click="start_record">Start Recording</v-btn>
       <v-btn v-if="recording" @click="stop_record">Stop Recording</v-btn>
       <v-btn @click="retrieve_recording">View past recordings</v-btn>
-      <v-btn @click="delete_recording">Delete Past Recordings</v-btn>
+      <!-- <v-btn @click="delete_recording">Delete Past Recordings</v-btn> -->
       <v-data-table 
         v-if="recording_list" 
         loading-text="Loading... Please wait"
@@ -195,16 +195,16 @@ export default {
       })
     },
 
-    delete_recording:function(id){
-      console.log('delete_recording, id: ' + id)
-      this.DELETE_RECORDING(id).then(response => {
-        this.status_msg = response;
-        this.retrieve_recording();
-      })
-      .catch(error => {
-        this.status_msg = error;
-      })
-    }
+    // delete_recording:function(id){
+    //   console.log('delete_recording, id: ' + id)
+    //   this.DELETE_RECORDING(id).then(response => {
+    //     this.status_msg = response;
+    //     this.retrieve_recording();
+    //   })
+    //   .catch(error => {
+    //     this.status_msg = error;
+    //   })
+    // }
 
   }
 }
