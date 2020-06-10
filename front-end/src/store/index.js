@@ -8,8 +8,8 @@ const store = new Vuex.Store({
     //split this file into modules are include them here if there are too many functions
   },
   state: {
-    backend_url: "https://localhost:5000/api-sessions",
-    // backend_url: "https://165.22.99.104:5000/api-sessions",
+    // backend_url: "https://localhost:5000/api-sessions",
+    backend_url: "https://165.22.99.104:5000",
     selectedDevice:undefined, 
     joined: false,
     devices: undefined,
@@ -44,29 +44,27 @@ const store = new Vuex.Store({
   },
 
   actions: {
-    poll_devices(context){
-      setInterval(() => {
-        axios({
-          method:'get', 
-          url: context.state.backend_url + "/obtain-device-list",
-          headers:{
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*"
-          }
-        }).then(function(response){
-          context.commit('UPDATE_DEVICES',Object.values(response.data));
-        })
-        .catch(function(error){
-          console.warn(error);
-        })
-      },2000)
+    POLL_DEVICES(context){
+      axios({
+        method:'get', 
+        url: context.state.backend_url + "/api-sessions/obtain-device-list",
+        headers:{
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      }).then(function(response){
+        context.commit('UPDATE_DEVICES',Object.values(response.data));
+      })
+      .catch(function(error){
+        console.warn(error);
+      })
     },
 
-    get_token(context,session){
+    GET_TOKEN(context,session){
       return new Promise((resolve,reject) => {
         axios({
           method:'post', 
-          url: context.state.backend_url + "/get-token",
+          url: context.state.backend_url + "/api-sessions/get-token",
           data: JSON.stringify({session_id:session}),
           headers: {
               "Content-Type": "application/json",
@@ -74,7 +72,6 @@ const store = new Vuex.Store({
           },
         })
         .then(response => {
-          console.log('store returns token: ' + response.data.token)
           resolve(response.data.token);
         })
         .catch(error => {
@@ -82,32 +79,113 @@ const store = new Vuex.Store({
         })
       })
     },
-    // check_status(context,session_id) {
-    //   axios({
-    //       method:'get', 
-    //       url: context.state.OPENVIDU_SERVER_URL + "/api/sessions/" + session_id,
-    //       headers: {
-    //           "Authorization": "Basic " + btoa("OPENVIDUAPP:" + context.state.OPENVIDU_SERVER_SECRET),
-    //           "Content-Type": "application/json",
-    //           'Access-Control-Allow-Origin': '*'
-    //       },  
-    //   })
-    //   .then(function (response) {
-    //       var elements_count = response.data.connections.numberOfElements;
-    //       var i;
-    //       for(i=0; i<elements_count; i++) {
-    //         var obj = response.data.connections.content[i];
-    //         if(obj.role == 'PUBLISHER'){
-    //           console.log('supposed to set status to connected')
-    //           context.commit('STATUS_CONNECT',session_id);
-    //         }
-    //       }
-    //   })
-    //   .catch(function () {
-    //       context.commit('STATUS_DISCONNECT',session_id);
-    //   });
-    // },
-  },
+
+    DISCONNECT(context,{session,token}){
+      console.log(session,token)
+      return new Promise((resolve,reject) => {
+        axios({
+          method:'post', 
+          url: context.state.backend_url + "/api-sessions/remove-user",
+          data: JSON.stringify({session_id:session, token:token}),
+          headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+          },
+        })
+        .then(response => {
+          resolve(response.data);
+        })
+        .catch(error => {
+          console.log('removing session ' + session + ' failed');
+          reject(error);
+        })
+      })
+    },
+
+    START_RECORD(context,session){
+      return new Promise((resolve,reject) => {
+        axios({
+          method:'post', 
+          url: context.state.backend_url + "/api-recording/start-record",
+          data: JSON.stringify({session_id:session}),
+          headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+          },
+        })
+        .then(response => {
+          var output = [response.data.id, response.data.status]
+          resolve(output);
+        })
+        .catch(error => {
+          console.log('start recording at ' + session + ' failed');
+          reject(error);
+        })
+      })
+    },
+
+    STOP_RECORD(context,{session,id}){
+      return new Promise((resolve,reject) => {
+        axios({
+          method:'post', 
+          url: context.state.backend_url + "/api-recording/stop-record",
+          data: JSON.stringify({session_id:session, record_id:id}),
+          headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+          },
+        })
+        .then(response => {
+          var output = [response.data.id, response.data.status]
+          resolve(output);
+        })
+        .catch(error => {
+          reject(error);
+        })
+      })
+    },
+
+    DELETE_RECORDING(context,id){
+      return new Promise((resolve,reject) => {
+        axios({
+          method:'delete', 
+          url: context.state.backend_url + "/api-recording/" + id,
+          headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+          },
+        })
+        .then(response => {
+          resolve(response.data);
+        })
+        .catch(error => {
+          reject(error);
+        })
+      })
+    },
+
+    RETRIEVE_RECORDING(context, id){
+      return new Promise((resolve,reject) => {
+        axios({
+        method:'get', 
+        url: context.state.backend_url + "/api-recording/session/" + id,
+        headers:{
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*"
+        }
+      }).then(function(response){
+        var recordings= Object.values(response.data)
+        // delete recordings.timestamp_raw
+        resolve(recordings)
+      })
+      .catch(function(error){
+        reject(error);
+      })
+      })
+    },
+
+  },  
+
 })
 
 export default store;

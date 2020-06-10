@@ -41,7 +41,7 @@ export default {
 
   methods:{
     ...mapMutations(['SELECT_DEVICE','SET_JOINED']),
-    ...mapActions(['poll_devices']),
+    ...mapActions(['POLL_DEVICES']),
 
     set_device(session_id){
       this.SELECT_DEVICE(session_id);
@@ -50,11 +50,13 @@ export default {
   },
 
   created(){
-    this.poll_devices();
+    setInterval(() => {
+      this.POLL_DEVICES();
+    },2000)
   },
 
   beforeDestroy(){
-    //
+    clearInterval(this.POLL_DEVICES())
   }
 }
 </script>
