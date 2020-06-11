@@ -17,24 +17,34 @@
       </v-col>
     </v-row>
 
-    <!-- <v-btn @click="leaveSession">LEAVE SESSION</v-btn> -->
-
-    <div id="session" v-if="joined">
+    <div id="session" v-if="joined" pa-2>
       <h2>Viewing session: {{selectedDevice}}</h2>
       <v-btn @click="leaveSession">LEAVE SESSION</v-btn>
       <br>
-      <v-btn v-if="!recording" @click="start_record">Start Recording</v-btn>
-      <v-btn v-if="recording" @click="stop_record">Stop Recording</v-btn>
-      <v-btn @click="retrieve_recording">View past recordings</v-btn>
-      <!-- <v-btn @click="delete_recording">Delete Past Recordings</v-btn> -->
+      <div id ="subscriber" class="subscriber"></div>
+
+      <v-btn outlined color="red" small v-if="!recording" @click="start_record">
+        <v-icon left>mdi-record</v-icon>
+        Start Recording
+      </v-btn>
+      <v-btn outlined color="secondary" small v-if="recording" @click="stop_record">Stop Recording</v-btn>
+      <v-btn small dark color="indigo" v-if="!show_table" @click="retrieve_recording">View past recordings</v-btn>
+      <v-btn small dark color="indigo" v-if="show_table" @click="show_table = false">Hide table</v-btn>
+
+      <p>{{status_msg}}</p>
+
       <v-data-table 
-        v-if="recording_list" 
+        v-if="recording_list && show_table" 
         loading-text="Loading... Please wait"
         :headers="headers"
         :items="recording_list"
         :items-per-page="5"
         class="elevation-1"
       >
+          <template v-slot:item.open_url="{ item }">
+            <v-btn text small color="primary" @click="video_tab(item.url)">{{view_video}}</v-btn>
+          </template>
+
           <template v-slot:item.actions="{ item }">
             <v-icon
               small
@@ -45,9 +55,6 @@
           </template>
 
       </v-data-table>
-      <p>{{status_msg}}</p> 
-      <br>
-      <div id ="subscriber" class="subscriber"></div>
     </div>
     </v-container>
 
@@ -68,6 +75,7 @@ export default {
       recording: false,
       recording_id: undefined,
       status_msg: undefined,
+      show_table: false,
       headers: [
         {
           text: 'ID',
@@ -76,10 +84,11 @@ export default {
           value: 'id',
         },
         { text: 'Timestamp', value: 'timestamp' },
-        { text: 'URL', value: 'url' },
-        { text: 'Actions', value: 'actions', sortable: false  },
+        { text: 'View video', value: 'open_url', sortable: false },
+        { text: 'Delete', value: 'actions', sortable: false  },
       ],
       recording_list: undefined,
+      view_video: "VIEW VIDEO"
     }
   },
 
@@ -103,12 +112,13 @@ export default {
   beforeDestroy(){
     clearInterval(this.POLL_DEVICES());
     this.leaveSession();
-    // this.DISCONNECT(this.selectedDevice);
   },
 
   methods:{
     ...mapMutations(['SELECT_DEVICE', 'SET_JOINED']),
-    ...mapActions(['POLL_DEVICES', 'GET_TOKEN', 'DISCONNECT', 'START_RECORD', 'STOP_RECORD', 'DELETE_RECORDING', 'RETRIEVE_RECORDING']),
+    ...mapActions(['POLL_DEVICES', 'GET_TOKEN', 'DISCONNECT', 
+    'START_RECORD', 'STOP_RECORD', 'DELETE_RECORDING', 
+    'RETRIEVE_RECORDING']),
 
     joinSession: function(){
       this.SET_JOINED(true);
@@ -133,13 +143,18 @@ export default {
     leaveSession: function() {
       let device = this.selectedDevice;
       let token = this.token;
+
+      if(this.recording){
+        this.stop_record(this.recording_id);
+      }
       console.log('in leaveSession with data: ' + device + ' ' + token)
       this.DISCONNECT({device,token}).then(() => {
-        console.log('leave session sucess')
+        console.log('DISCONNECT SUCCESS')
         this.SET_JOINED(false);
-      })
-      // session.disconnect();
-      // this.SET_JOINED(false);
+      }).catch(error =>{
+        console.warn(error);
+      });
+      session.disconnect();
     },
 
     changed_selection:function(){
@@ -163,7 +178,7 @@ export default {
           }
         })
         .catch(error => {
-          console.warn("There was an error recording the session:", error.code, error.message);
+          console.warn("There was an error recording the session:", error.message);
         })
       }else{
         console.warn('Unable to start session as session does not exist')
@@ -171,6 +186,7 @@ export default {
     },
 
     stop_record:function(){
+      this.status_msg = "Stopping recording, please wait..."
       let device = this.selectedDevice;
       let id = this.recording_id;
       this.STOP_RECORD({device,id}).then(response => {
@@ -189,11 +205,12 @@ export default {
     },
 
     retrieve_recording:function(){
+      this.show_table = true
       this.RETRIEVE_RECORDING(this.selectedDevice).then(response => {
         this.recording_list = response
       })
       .catch(error => {
-        this.status_msg = error
+        this.status_msg = error + ' There are no recordings found for this session'
       })
     },
 
@@ -206,6 +223,12 @@ export default {
       .catch(error => {
         this.status_msg = error;
       })
+    }, 
+
+    video_tab:function(video_url){
+      let url = "https://OPENVIDUAPP:MY_SECRET@" + video_url.substr(8);
+      console.log('url')
+      window.open(url);
     }
 
   }

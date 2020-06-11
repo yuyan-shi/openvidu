@@ -13,7 +13,9 @@ const store = new Vuex.Store({
     selectedDevice:undefined, 
     joined: false,
     devices: undefined,
-    token: undefined
+    token: undefined,
+    OPENVIDU_SERVER_SECRET: "MY_SECRET",
+    OPENVIDU_USER: "OPENVIDUAPP",
   },
   
   mutations: {
@@ -165,6 +167,7 @@ const store = new Vuex.Store({
     },
 
     RETRIEVE_RECORDING(context, id){
+      console.log('in RETRIEVE_RECORDING with: ' + id)
       return new Promise((resolve,reject) => {
         axios({
         method:'get', 
@@ -182,6 +185,27 @@ const store = new Vuex.Store({
       })
       })
     },
+
+    // VIEW_RECORDING(context, url){
+    //   // console.log('auth: ' + context.state.OPENVIDU_USER + context.state.OPENVIDU_SERVER_SECRET);
+    //   return new Promise((resolve,reject) => {
+    //     axios({
+    //     method:'get', 
+    //     url: url,
+    //     headers:{
+    //       "Authorization": "Basic " + btoa("OPENVIDUAPP:" + context.state.OPENVIDU_SERVER_SECRET),
+    //       "Content-Type": "application/json",
+    //       "Access-Control-Allow-Origin": "*"
+    //     }
+    //   }).then(function(response){
+    //     resolve(response);
+    //   })
+    //   .catch(function(error){
+    //     console.warn(error)
+    //     reject(error);
+    //   })
+    //   })
+    // },
 
   },  
 
