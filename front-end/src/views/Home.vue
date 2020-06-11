@@ -21,7 +21,7 @@
                 {{device.Status}}</div>
               <!-- <v-btn @click="refresh_status(device.session_id)">refresh status</v-btn> -->
             </v-card-text>
-            <router-link :to="{name:'About'}">
+            <router-link :to="{name:'Device', params:{name: device.device_name}}">
               <span v-on:click="set_device(device.Session_id)">MONITOR DEVICE</span>
             </router-link>
           </v-responsive>
@@ -40,19 +40,18 @@ export default {
   },
 
   methods:{
-    ...mapMutations(['SELECT_DEVICE','SET_JOINED']),
+    ...mapMutations(['SELECT_DEVICE','DEVICE_STATUS','SET_JOINED']),
     ...mapActions(['POLL_DEVICES']),
 
-    set_device(session_id){
-      this.SELECT_DEVICE(session_id);
+    set_device(id){
+      this.SELECT_DEVICE(id);
       this.SET_JOINED(true);
     },
   },
 
   created(){
-    setInterval(() => {
-      this.POLL_DEVICES();
-    },2000)
+    setInterval(() => {this.POLL_DEVICES()},2000)
+     window.addEventListener('beforeunload', clearInterval(this.POLL_DEVICES()));
   },
 
   beforeDestroy(){

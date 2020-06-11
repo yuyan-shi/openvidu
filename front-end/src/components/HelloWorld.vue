@@ -1,6 +1,6 @@
 <template>
-  <v-container fluid>
-    <v-row align="center">
+  <v-container fluid >
+    <!-- <v-row align="center">
       <v-col class="d-flex" cols="12" sm="6">
           <v-select
             v-model="selected"
@@ -13,55 +13,92 @@
           </v-select>
       </v-col>
       <v-col class="d-flex" cols="6" sm="3">
-        <v-btn v-if="selectedDevice&&!joined" @click="joinSession">Join session</v-btn>
+        <v-btn v-if="selected_device&&!joined" @click="joinSession">Join session</v-btn>
       </v-col>
-    </v-row>
+    </v-row> -->
 
-    <div id="session" v-if="joined" pa-2>
-      <h2>Viewing session: {{selectedDevice}}</h2>
-      <v-btn @click="leaveSession">LEAVE SESSION</v-btn>
-      <br>
-      <div id ="subscriber" class="subscriber"></div>
+  <v-row>
+    <v-col cols = "12">
+      <h2>Viewing session: {{selected_device}}</h2>
+    </v-col>
+  </v-row>
 
-      <v-btn outlined color="red" small v-if="!recording" @click="start_record">
+  <v-row>
+    <v-col cols = "12">
+      <v-btn small to="/" @click="beforeUnload">BACK TO HOME</v-btn>
+    </v-col>
+  </v-row>
+
+  <v-row>
+    <v-col cols = "12">
+      <div id ="subscriber" class="subscriber">
+        <v-card v-if="selected_status == 'not connected'" 
+        color="grey darken-3" dark 
+        height="200px" max-width="500"
+        >
+          <v-card-title class="justify-center">
+            This device is not available.<br/>
+            Please connect your device to view stream.
+          </v-card-title>
+        </v-card>
+      </div>
+    </v-col>
+  </v-row>
+
+  <v-row>
+    <v-col cols = "12" class="pa-2">
+      <v-btn outlined color="red" small 
+      v-if="!recording && selected_status == 'connected'" 
+      @click="start_record"
+      >
         <v-icon left>mdi-record</v-icon>
         Start Recording
       </v-btn>
       <v-btn outlined color="secondary" small v-if="recording" @click="stop_record">Stop Recording</v-btn>
-      <v-btn small dark color="indigo" v-if="!show_table" @click="retrieve_recording">View past recordings</v-btn>
-      <v-btn small dark color="indigo" v-if="show_table" @click="show_table = false">Hide table</v-btn>
+      <v-btn small dark depressed color="indigo" v-if="!show_table" @click="retrieve_recording">View past recordings</v-btn>
+      <v-btn small dark depressed color="indigo" v-if="show_table" @click="show_table = false">Hide table</v-btn>
 
       <p>{{status_msg}}</p>
 
-      <v-data-table 
-        v-if="recording_list && show_table" 
-        loading-text="Loading... Please wait"
-        :headers="headers"
-        :items="recording_list"
-        :items-per-page="5"
-        class="elevation-1"
+    </v-col>
+  </v-row>
+
+  <v-row>
+    <v-data-table 
+      v-if="recording_list && show_table" 
+      loading-text="Loading... Please wait"
+      :headers="headers"
+      :items="recording_list"
+      :items-per-page="5"
+      class="elevation-1"
       >
-          <template v-slot:item.open_url="{ item }">
-            <v-btn text small color="primary" @click="video_tab(item.url)">{{view_video}}</v-btn>
-          </template>
+      <template v-slot:item.open_url="{ item }">
+        <v-btn text small @click="video_tab(item.url)"
+          :class="{
+            'primary--text': item.status == 'ready', 
+            'grey--text': item.status != 'ready',
+            }"
+        >{{item.status}}</v-btn>
+      </template>
 
-          <template v-slot:item.actions="{ item }">
-            <v-icon
-              small
-              @click="delete_recording(item.id)"
-            >
-              mdi-delete
-            </v-icon>
-          </template>
+      <template v-slot:item.actions="{ item }">
+        <v-icon
+          small
+          @click="delete_recording(item.id)"
+        >
+          mdi-delete
+        </v-icon>
+      </template>
 
-      </v-data-table>
-    </div>
+    </v-data-table>
+  </v-row>
+
     </v-container>
 
 </template>
 
 <script>
-import {mapState, mapMutations, mapActions} from 'vuex';
+import {mapState, mapMutations, mapActions, mapGetters} from 'vuex';
 import {OpenVidu} from 'openvidu-browser';
 // import axios from 'axios';
 var OV;
@@ -84,6 +121,8 @@ export default {
           value: 'id',
         },
         { text: 'Timestamp', value: 'timestamp' },
+        { text: 'Duration', value: 'duration' },
+        { text: 'Size', value: 'size' },
         { text: 'View video', value: 'open_url', sortable: false },
         { text: 'Delete', value: 'actions', sortable: false  },
       ],
@@ -93,25 +132,20 @@ export default {
   },
 
   computed:{
-    ...mapState(['joined', 'selectedDevice', 'devices']),
+    ...mapState(['selected_device']),
+    ...mapGetters(['selected_status']),
   },
 
   mounted:function(){
-    if(this.joined&&this.selectedDevice){
+    if(this.selected_device){
       console.log('joined and sleectedDevice are toggled');
       this.joinSession();
     }
   },
 
   created(){
-    setInterval(() => {
-      this.POLL_DEVICES();
-    },2000)
-  },
-
-  beforeDestroy(){
-    clearInterval(this.POLL_DEVICES());
-    this.leaveSession();
+    // setInterval(() => {this.POLL_DEVICES()},2000);
+    window.addEventListener('beforeunload', this.beforeUnload()) 
   },
 
   methods:{
@@ -119,6 +153,14 @@ export default {
     ...mapActions(['POLL_DEVICES', 'GET_TOKEN', 'DISCONNECT', 
     'START_RECORD', 'STOP_RECORD', 'DELETE_RECORDING', 
     'RETRIEVE_RECORDING']),
+
+    beforeUnload(){
+      console.log('in beforeUnload');
+      clearInterval(this.POLL_DEVICES());
+      if(session){
+        this.leaveSession();
+      }
+    },
 
     joinSession: function(){
       this.SET_JOINED(true);
@@ -130,9 +172,12 @@ export default {
         session.subscribe(event.stream, "subscriber");
       });
 
-      this.GET_TOKEN(this.selectedDevice)
+      let device = this.selected_device;
+      let role = "SUBSCRIBER"
+      this.GET_TOKEN({device,role})
       .then(token => {
         this.token = token;
+        console.log('token:' + token)
         session.connect(token);
       })
       .catch(error => {
@@ -141,7 +186,7 @@ export default {
     },
 
     leaveSession: function() {
-      let device = this.selectedDevice;
+      let device = this.selected_device;
       let token = this.token;
 
       if(this.recording){
@@ -166,28 +211,25 @@ export default {
 
     start_record:function(){
       if(session){
-        console.log('starting recording for session: ' +this.selectedDevice)
-        this.START_RECORD(this.selectedDevice).then(response => {
+        console.log('starting recording for session: ' +this.selected_device)
+        this.START_RECORD(this.selected_device).then(response => {
           if(response[1] == 'started'){
             this.recording = true;
             this.recording_id = response[0];
             this.status_msg = 'Recording started at id: ' + this.recording_id;
           }
-          else{
-            this.status_msg = 'We encouterd an error when starting the recording'
-          }
+          else this.status_msg = 'We encouterd an error when starting the recording'
         })
         .catch(error => {
           console.warn("There was an error recording the session:", error.message);
         })
-      }else{
-        console.warn('Unable to start session as session does not exist')
       }
+      else console.warn('Unable to start session as session does not exist')
     },
 
     stop_record:function(){
       this.status_msg = "Stopping recording, please wait..."
-      let device = this.selectedDevice;
+      let device = this.selected_device;
       let id = this.recording_id;
       this.STOP_RECORD({device,id}).then(response => {
           if(response[1] == 'ready'){
@@ -195,9 +237,7 @@ export default {
             this.recording_id = response[0];
             this.status_msg = 'Your recording is successfully saved under id: ' + this.recording_id;
           }
-          else{
-            this.status_msg = 'We encouterd an error when stoping the recording'
-          }
+          else this.status_msg = 'We encouterd an error when stoping the recording'
         })
         .catch(error => {
           console.warn("There was an error stoping this recording", error.code, error.message);
@@ -206,11 +246,11 @@ export default {
 
     retrieve_recording:function(){
       this.show_table = true
-      this.RETRIEVE_RECORDING(this.selectedDevice).then(response => {
+      this.RETRIEVE_RECORDING(this.selected_device).then(response => {
         this.recording_list = response
       })
       .catch(error => {
-        this.status_msg = error + ' There are no recordings found for this session'
+        this.status_msg = error + '. There are no recordings found for this session.'
       })
     },
 
@@ -226,9 +266,11 @@ export default {
     }, 
 
     video_tab:function(video_url){
-      let url = "https://OPENVIDUAPP:MY_SECRET@" + video_url.substr(8);
-      console.log('url')
-      window.open(url);
+      if(video_url){
+        let url = "https://OPENVIDUAPP:MY_SECRET@" + video_url.substr(8);
+        console.log('url')
+        window.open(url);
+      }
     }
 
   }

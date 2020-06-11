@@ -10,7 +10,7 @@ const store = new Vuex.Store({
   state: {
     // backend_url: "https://localhost:5000",
     backend_url: "https://165.22.99.104:5000",
-    selectedDevice:undefined, 
+    selected_device:undefined,
     joined: false,
     devices: undefined,
     token: undefined,
@@ -23,7 +23,7 @@ const store = new Vuex.Store({
       state.devices = arr;
     },
     SELECT_DEVICE(state,device){
-      state.selectedDevice = device;
+      state.selected_device = device;
     },
     SET_JOINED(state,bol){
       state.joined = bol;
@@ -62,12 +62,12 @@ const store = new Vuex.Store({
       })
     },
 
-    GET_TOKEN(context,session){
+    GET_TOKEN(context,{device,role}){
       return new Promise((resolve,reject) => {
         axios({
           method:'post', 
           url: context.state.backend_url + "/api-sessions/get-token",
-          data: JSON.stringify({session_id:session}),
+          data: JSON.stringify({session_id:device, role:role}),
           headers: {
               "Content-Type": "application/json",
               "Access-Control-Allow-Origin": "*"
@@ -177,7 +177,19 @@ const store = new Vuex.Store({
           "Access-Control-Allow-Origin": "*"
         }
       }).then(function(response){
-        var recordings= Object.values(response.data)
+        let data = response.data;
+        console.log("data.length: " + Object.keys(data).length);
+        let i;
+        for(i=0; i <Object.keys(data).length; i++){
+          var size_mb = (data[i]["size"]/1000000).toFixed(1)
+          if(size_mb > 0){
+            data[i]["size"] = size_mb + "MB"
+          }else{
+            data[i]["size"] = (data[i]["size"]/1000).toFixed(0) + "KB"
+          }
+          data[i]["duration"] = (data[i]["duration"]/60).toFixed(0).toString() + "min " + (data[i]["duration"]%60).toFixed(0).toString() + "s"
+        }
+        var recordings= Object.values(data)
         resolve(recordings)
       })
       .catch(function(error){
@@ -207,7 +219,22 @@ const store = new Vuex.Store({
     //   })
     // },
 
-  },  
+  },
+  
+  getters:{
+    selected_status(state){
+      if(state.selected_device){
+        var i;
+        for(i=0; i <Object.keys(state.devices).length; i++){
+          if(state.devices[i]["Session_id"] == state.selected_device){
+            console.log('found')
+            return state.devices[i]["Status"]
+          }
+          else return "not connected"
+        }
+      }
+    }
+  }
 
 })
 
