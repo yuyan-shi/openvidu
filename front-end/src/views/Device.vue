@@ -32,12 +32,12 @@ export default {
   },
 
   beforeRouteLeave (to, from, next) {
-    this.$refs.HelloWorld.beforeUnload();
+    this.$refs.HelloWorld.before_unload();
     next()
   },
 
   beforeRouteUpdate (to, from, next) {
-    this.$refs.HelloWorld.beforeUnload();
+    this.$refs.HelloWorld.before_unload();
     next()
   }
 }

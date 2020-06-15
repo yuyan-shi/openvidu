@@ -11,11 +11,9 @@ const store = new Vuex.Store({
     // backend_url: "https://localhost:5000",
     backend_url: "https://165.22.99.104:5000",
     selected_device:undefined,
+    selected_status:undefined,
     joined: false,
     devices: undefined,
-    token: undefined,
-    OPENVIDU_SERVER_SECRET: "MY_SECRET",
-    OPENVIDU_USER: "OPENVIDUAPP",
   },
   
   mutations: {
@@ -24,6 +22,9 @@ const store = new Vuex.Store({
     },
     SELECT_DEVICE(state,device){
       state.selected_device = device;
+    },
+    UPDATE_STATUS(state,status){
+      state.selected_status = status;
     },
     SET_JOINED(state,bol){
       state.joined = bol;
@@ -55,7 +56,14 @@ const store = new Vuex.Store({
           "Access-Control-Allow-Origin": "*"
         }
       }).then(function(response){
-        context.commit('UPDATE_DEVICES',Object.values(response.data));
+        let data = Object.values(response.data);
+        context.commit('UPDATE_DEVICES',data);
+        if(context.state.selected_device){
+          var i;
+          for(i=0; i <Object.keys(data).length; i++){
+            context.commit('UPDATE_STATUS', data[i]["Status"]);
+          }
+        }
       })
       .catch(function(error){
         console.warn(error);
@@ -198,6 +206,46 @@ const store = new Vuex.Store({
       })
     },
 
+    PUBLISH_CAMERA(context, id,rtspUri){
+      return new Promise((resolve,reject) => {
+        axios({
+          method:'post', 
+          url: context.state.backend_url + "/api-sessions/ip-camera-publisher",
+          data: JSON.stringify({session_id:id, rtspUri:rtspUri}),
+          headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+          },
+        })
+        .then(response => {
+          resolve(response);
+        })
+        .catch(error => {
+          reject(error);
+        })
+      })
+    },
+
+    UNPUBLISH_RECORDING(context,{session,connection}){
+      let connection = "ipc_IPCAM_rtsp_CMXP_127_0_1_1_footage2_mkv"
+      return new Promise((resolve,reject) => {
+        axios({
+          method:'delete', 
+          url: context.state.backend_url + "/api-recording/" + session + "/" + connection,
+          headers: {
+              "Content-Type": "application/json",
+              "Access-Control-Allow-Origin": "*"
+          },
+        })
+        .then(response => {
+          resolve(response.data);
+        })
+        .catch(error => {
+          reject(error);
+        })
+      })
+    },
+
     // VIEW_RECORDING(context, url){
     //   // console.log('auth: ' + context.state.OPENVIDU_USER + context.state.OPENVIDU_SERVER_SECRET);
     //   return new Promise((resolve,reject) => {
@@ -222,18 +270,7 @@ const store = new Vuex.Store({
   },
   
   getters:{
-    selected_status(state){
-      if(state.selected_device){
-        var i;
-        for(i=0; i <Object.keys(state.devices).length; i++){
-          if(state.devices[i]["Session_id"] == state.selected_device){
-            console.log('found')
-            return state.devices[i]["Status"]
-          }
-          else return "not connected"
-        }
-      }
-    }
+    
   }
 
 })
