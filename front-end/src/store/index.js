@@ -227,7 +227,6 @@ const store = new Vuex.Store({
     },
 
     UNPUBLISH_RECORDING(context,{session,connection}){
-      let connection = "ipc_IPCAM_rtsp_CMXP_127_0_1_1_footage2_mkv"
       return new Promise((resolve,reject) => {
         axios({
           method:'delete', 

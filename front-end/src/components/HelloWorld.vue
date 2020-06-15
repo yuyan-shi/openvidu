@@ -26,7 +26,7 @@
   <v-row>
     <v-col cols = "12">
       <v-btn small depressed to="/" @click="before_unload">BACK TO HOME</v-btn>
-      <v-btn small depressed color="grey lighten-2" v-if="joined&&!loading" @click="disconnect_device()">Disconnect device</v-btn>
+      <v-btn small depressed color="grey lighten-2" v-if="joined&&!loading" @click="unpublish_camera()">Disconnect device</v-btn>
     </v-col>
   </v-row>
 
@@ -258,6 +258,10 @@ export default {
       .catch(error => {
         console.warn(error)
       })
+    },
+
+    unpublish_camera:function(){
+      
     },
 
     /*
