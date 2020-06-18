@@ -1,0 +1,2 @@
+(window["webpackJsonp"]=window["webpackJsonp"]||[]).push([["about"],{"814f":function(e,n,t){"use strict";t.r(n);var o=function(){var e=this,n=e.$createElement,t=e._self._c||n;return t("div",[t("rest_mod")],1)},s=[],c=t("cb51"),r={components:{rest_mod:c["a"]}},u=r,a=t("2877"),l=Object(a["a"])(u,o,s,!1,null,null,null);n["default"]=l.exports}}]);
+//# sourceMappingURL=about.8f7f8a78.js.map
